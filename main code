@@ -1,0 +1,385 @@
+from tkinter import *
+from tkinter import messagebox, filedialog
+from PIL import ImageTk, Image
+import os
+import json
+
+class SignUpPage:
+    def __init__(self, window, login_page):
+        self.window = window
+        self.window.geometry('1166x718')  # Same size as login page
+        self.window.resizable(0, 0)
+        self.window.title('Sign Up Page')
+        self.window.configure(bg="white")  # White background color
+
+        self.login_page = login_page
+
+        self.username_var = StringVar()
+        self.password_var = StringVar()
+        self.confirm_password_var = StringVar()
+
+        # Heading
+        self.heading = Label(window, text="New Account", font=('CALLUNA', 30, "bold"), bg="white", fg='Blue')
+        self.heading.place(relx=0.5, rely=0.05, anchor=CENTER)
+
+        # Left side image
+        self.side_image = Image.open('girl image.jpg')
+        photo = ImageTk.PhotoImage(self.side_image)
+        self.side_image_label = Label(window, image=photo, bg='white')
+        self.side_image_label.image = photo
+        self.side_image_label.place(relx=0.3, rely=0.5, anchor=CENTER)  # Adjusted relx value
+
+        # Sign-up credentials
+        self.username_label = Label(window, text="Username:", bg="white",fg="black",font=("CALLUNA", 19, "bold"))
+        self.username_label.place(relx=0.65, rely=0.3, anchor=CENTER)
+        self.username_entry = Entry(window, textvariable=self.username_var)
+        self.username_entry.place(relx=0.8, rely=0.3, anchor=CENTER)
+
+        self.password_label = Label(window, text="New Password:", bg="white", font=("CALLUNA", 19, "bold"))
+        self.password_label.place(relx=0.65, rely=0.4, anchor=CENTER)
+        self.password_entry = Entry(window, textvariable=self.password_var, show="*")
+        self.password_entry.place(relx=0.8, rely=0.4, anchor=CENTER)
+
+        self.confirm_password_label = Label(window, text="Confirm Password:", bg="white", font=("CALLUNA", 19, "bold"))
+        self.confirm_password_label.place(relx=0.65, rely=0.5, anchor=CENTER)
+        self.confirm_password_entry = Entry(window, textvariable=self.confirm_password_var, show="*")
+        self.confirm_password_entry.place(relx=0.8, rely=0.5, anchor=CENTER)
+
+        self.signup_button = Button(window, text="Sign Up", command=self.sign_up, bg='Green', fg='white', font=("CALLUNA", 20, "bold"))
+        self.signup_button.place(relx=0.8, rely=0.6, anchor=CENTER)
+
+    def sign_up(self):
+        username = self.username_var.get()
+        password = self.password_var.get()
+        confirm_password = self.confirm_password_var.get()
+
+        if password != confirm_password:
+            messagebox.showerror("Error", "Passwords do not match")
+            return
+
+        print("New account created with username:", username, "and password:", password)
+        messagebox.showinfo("Success", "Account created successfully")
+        self.window.destroy()
+        self.login_page.add_account(username, password)
+
+class PasswordResetPage:
+    def __init__(self, window, login_page):
+        self.window = window
+        self.window.geometry('400x300')  # Set custom size for password reset window
+        self.window.resizable(0, 0)
+        self.window.title('Password Reset')
+        self.window.configure(bg="black")  # Black background color
+
+        self.login_page = login_page
+
+        self.username_var = StringVar()
+        self.password_var = StringVar()
+        self.confirm_password_var = StringVar()
+
+        # Password reset credentials
+        self.username_label = Label(window, text="Username:", bg="black",fg="white",font=("CALLUNA", 19, "bold"))
+        self.username_label.place(relx=0.1, rely=0.2, anchor=W)
+        self.username_entry = Entry(window, textvariable=self.username_var)
+        self.username_entry.place(relx=0.6, rely=0.2, anchor=W)
+
+        self.password_label = Label(window, text="New Password:", bg="black", font=("CALLUNA", 19, "bold"), fg="white")
+        self.password_label.place(relx=0.1, rely=0.35, anchor=W)
+        self.password_entry = Entry(window, textvariable=self.password_var, show="*")
+        self.password_entry.place(relx=0.6, rely=0.35, anchor=W)
+
+        self.confirm_password_label = Label(window, text="Confirm Password:", bg="black", font=("CALLUNA", 19, "bold"), fg="white")
+        self.confirm_password_label.place(relx=0.1, rely=0.5, anchor=W)
+        self.confirm_password_entry = Entry(window, textvariable=self.confirm_password_var, show="*")
+        self.confirm_password_entry.place(relx=0.6, rely=0.5, anchor=W)
+
+        self.reset_button = Button(window, text="Reset Password", command=self.reset_password, bg='Green', fg='white', font=("CALLUNA", 20, "bold"))
+        self.reset_button.place(relx=0.5, rely=0.7, anchor=CENTER)
+
+    def reset_password(self):
+        username = self.username_var.get()
+        password = self.password_var.get()
+        confirm_password = self.confirm_password_var.get()
+
+        if password != confirm_password:
+            messagebox.showerror("Error", "Passwords do not match")
+            return
+
+        # Update the password in the accounts database
+        self.login_page.update_password(username, password)
+        messagebox.showinfo("Success", "Password reset successfully")
+        self.window.destroy()
+
+class ExeFileManager:
+    def __init__(self, parent):
+        self.parent = parent
+        self.exe_files = []
+
+        self.frame = Frame(parent, bg="white")
+        self.frame.pack(fill=BOTH, expand=True)
+
+        self.show_files_button = Button(self.frame, text="Show EXE Files", command=self.show_files,font=("Arial",20,"normal"))
+        self.show_files_button.pack(side=LEFT, padx=10, pady=10)
+
+        self.exit_button = Button(self.frame, text="Exit", command=self.parent.quit,font=("Arial",20,"normal"))
+        self.exit_button.pack(side=LEFT, padx=10, pady=10)  # Add the exit button
+
+        # Create listbox to display exe files
+        self.listbox = Listbox(self.frame, selectmode=SINGLE)
+        self.listbox.pack(fill=BOTH, expand=TRUE, padx=10, pady=10)
+        self.add_button = Button(self.frame, text="Add File", command=self.add_file,font=("Arial",20,"normal"))
+        self.add_button.pack(side=LEFT, padx=10, pady=10)
+
+        self.execute_button = Button(self.frame, text="Execute Selected File", command=self.execute_file,font=("Arial",20,"normal"))
+        self.execute_button.pack(side=LEFT, padx=10, pady=10)
+
+        self.delete_button = Button(self.frame, text="Delete Selected File", command=self.delete_file,font=("Arial",20,"normal"))
+        self.delete_button.pack(side=LEFT, padx=10, pady=10)
+
+        self.save_button = Button(self.frame, text="Save EXE Files", command=self.save_files,font=("Arial",20,"normal"))
+        self.save_button.pack(side=LEFT, padx=50, pady=50)
+    def add_file(self):
+        filename = filedialog.askopenfilename(filetypes=[("Executable files", "*.exe")])
+        if filename:
+            self.exe_files.append(filename)
+            self.listbox.insert(END, os.path.basename(filename))
+
+    def execute_file(self):
+        selection = self.listbox.curselection()
+        if selection:
+            index = selection[0]
+            exe_file = self.exe_files[index]
+            os.system(exe_file)
+        else:
+            messagebox.showinfo("Error", "No file selected")
+
+    def delete_file(self):
+        selection = self.listbox.curselection()
+        if selection:
+            index = selection[0]
+            del self.exe_files[index]
+            self.listbox.delete(index)
+        else:
+            messagebox.showinfo("Error", "No file selected")
+    def show_files(self):
+        # Clear listbox before displaying saved files
+        self.listbox.delete(0, END)
+        # Reload and display saved files
+        self.load_files()
+
+    def load_files(self):
+        if os.path.exists("exe_files.txt"):
+            with open("exe_files.txt", "r") as f:
+                self.exe_files = [line.strip() for line in f.readlines()]
+                for filename in self.exe_files:
+                    self.listbox.insert(END, os.path.basename(filename))
+    def save_files(self):
+        if self.exe_files:
+            with open("exe_files.txt", "w") as f:
+                for exe_file in self.exe_files:
+                    f.write(exe_file + "\n")
+            messagebox.showinfo("Success", "EXE files saved successfully")
+        else:
+            messagebox
+
+class MainApplication:
+    def __init__(self, window):
+        self.window = window
+        self.window.geometry('1166x718')
+        self.window.resizable(0, 0)
+        self.window.state('zoomed')
+        self.window.title('COLLABORA GUI')
+
+        # Initialize variables for username and password
+        self.username_var = StringVar()
+        self.password_var = StringVar()
+
+        # Account database
+        self.load_accounts()
+
+        # ========================================================================
+        # ============================background image============================
+        # ========================================================================
+        self.bg_frame = Image.open('background1.png')
+        photo = ImageTk.PhotoImage(self.bg_frame)
+        self.bg_panel = Label(self.window, image=photo)
+        self.bg_panel.image = photo
+        self.bg_panel.pack(fill='both', expand='yes')
+
+        # ====== Login Frame =========================
+        self.lgn_frame = Frame(self.window, bg='#040405', width=950, height=600)
+        self.lgn_frame.place(x=200, y=70)
+
+        # ========================================================================
+        # ========================================================
+        # ========================================================================
+        self.txt = "WELCOME"
+        self.heading = Label(self.lgn_frame, text=self.txt, font=('yu gothic ui', 25, "bold"), bg="#040405",
+                             fg='white', bd=5, relief=FLAT)
+        self.heading.place(x=80, y=30, width=300, height=30)
+
+        # ========================================================================
+        # ============ Left Side Image ================================================
+        # ========================================================================
+        self.side_image = Image.open('vector.png')
+        photo = ImageTk.PhotoImage(self.side_image)
+        self.side_image_label = Label(self.lgn_frame, image=photo, bg='#040405')
+        self.side_image_label.image = photo
+        self.side_image_label.place(x=5, y=100)
+
+        # ========================================================================
+        # ============ Sign In Image =============================================
+        # ========================================================================
+        self.sign_in_image = Image.open('hyy.png')
+        photo = ImageTk.PhotoImage(self.sign_in_image)
+        self.sign_in_image_label = Label(self.lgn_frame, image=photo, bg='#040405')
+        self.sign_in_image_label.image = photo
+        self.sign_in_image_label.place(x=620, y=130)
+
+        # ========================================================================
+        # ============ Sign In label =============================================
+        # ========================================================================
+        self.sign_in_label = Label(self.lgn_frame, text="Sign In", bg="#040405", fg="white",
+                                   font=("yu gothic ui", 17, "bold"))
+        self.sign_in_label.place(x=650, y=240)
+
+        # ========================================================================
+        # ============================username====================================
+        # ========================================================================
+        self.username_label = Label(self.lgn_frame, text="Username", bg="black", fg="white",
+                                    font=("yu gothic ui", 13, "bold"))
+        self.username_label.place(x=550, y=300)
+
+        self.username_entry = Entry(self.lgn_frame, highlightthickness=0, relief=FLAT, bg="#040405", fg="#6b6a69",
+                                    font=("yu gothic ui ", 12, "bold"), insertbackground='#6b6a69',
+                                    textvariable=self.username_var)
+        self.username_entry.place(x=580, y=335, width=270)
+
+        self.username_line = Canvas(self.lgn_frame, width=300, height=2.0, bg="#bdb9b1", highlightthickness=0)
+        self.username_line.place(x=550, y=359)
+        # ===== Username icon =========
+        self.username_icon = Image.open('username_icon.png')
+        photo = ImageTk.PhotoImage(self.username_icon)
+        self.username_icon_label = Label(self.lgn_frame, image=photo, bg='#040405')
+        self.username_icon_label.image = photo
+        self.username_icon_label.place(x=550, y=332)
+
+        # ========================================================================
+        # ============================login button================================
+        # ========================================================================
+        self.lgn_button = Image.open('btn1.png')
+        photo = ImageTk.PhotoImage(self.lgn_button)
+        self.lgn_button_label = Label(self.lgn_frame, image=photo, bg='#040405')
+        self.lgn_button_label.image = photo
+        self.lgn_button_label.place(x=550, y=450)
+        self.login_button = Button(self.lgn_button_label, text='LOGIN', font=("yu gothic ui", 13, "bold"), width=25, bd=0,
+                            bg='#3047ff', cursor='hand2', activebackground='#3047ff', fg='white',
+                            command=self.verify_login)
+        self.login_button.place(x=20, y=10)
+
+        # ========================================================================
+        # ============================Forgot password=============================
+        # ========================================================================
+        self.forgot_button = Button(self.lgn_frame, text="Forgot Password ?", font=("yu gothic ui", 13, "bold underline"),
+                                    fg="white", relief=FLAT, activebackground="#040405", borderwidth=0,
+                                    background="#040405", cursor="hand2", command=self.open_password_reset)
+        self.forgot_button.place(x=630, y=510)
+        # =========== Sign Up ==================================================
+        self.sign_label = Label(self.lgn_frame, text='No account yet?', font=("yu gothic ui", 11, "bold"), relief=FLAT,
+                                borderwidth=0, background="#040405", fg='white')
+        self.sign_label.place(x=550, y=560)
+
+        self.signup_img = ImageTk.PhotoImage(file='register.png')
+        self.signup_button_label = Button(self.lgn_frame, image=self.signup_img, bg='#98a65d', cursor="hand2",
+                                          borderwidth=0, background="#040405", activebackground="#040405",
+                                          command=self.open_signup_page)
+        self.signup_button_label.place(x=670, y=555, width=111, height=35)
+
+        # ========================================================================
+        # ============================password====================================
+        # ========================================================================
+        self.password_label = Label(self.lgn_frame, text="Password", bg="#040405", fg="white",
+                                    font=("yu gothic ui", 13, "bold"))
+        self.password_label.place(x=550, y=380)
+
+        self.password_entry = Entry(self.lgn_frame, highlightthickness=0, relief=FLAT, bg="#040405", fg="#6b6a69",
+                                    font=("yu gothic ui ", 12, "bold"), insertbackground='#6b6a69', show="*",
+                                    textvariable=self.password_var)
+        self.password_entry.place(x=580, y=410, width=270)
+
+        self.password_line = Canvas(self.lgn_frame, width=300, height=2.0, bg="#bdb9b1", highlightthickness=0)
+        self.password_line.place(x=550, y=434)
+        # ===== password icon =========
+        self.password_icon = Image.open('password_icon.png')
+        photo = ImageTk.PhotoImage(self.password_icon)
+        self.password_icon_label = Label(self.lgn_frame, image=photo, bg='#040405')
+        self.password_icon_label.image = photo
+        self.password_icon_label.place(x=550, y=407)
+        self.show_image = ImageTk.PhotoImage \
+            (file='show.png')
+
+        self.hide_image = ImageTk.PhotoImage \
+            (file='hide.png')
+
+        self.show_button = Button(self.lgn_frame, image=self.show_image, command=self.show, relief=FLAT,
+                                  activebackground="white", borderwidth=0, background="white", cursor="hand2")
+        self.show_button.place(x=860, y=420)
+
+        # ========================================================================
+        # ========================================================================
+        self.window.mainloop()
+
+    def verify_login(self):
+        username = self.username_var.get()
+        password = self.password_var.get()
+
+        if username in self.accounts and self.accounts[username] == password:
+            messagebox.showinfo("Success", "Login Successful")
+            self.window.destroy()
+            root = Tk()
+            app = ExeFileManager(root)
+        else:
+            messagebox.showerror("Error", "Invalid username or password")
+    def show(self):
+        self.hide_button = Button(self.lgn_frame, image=self.hide_image, command=self.hide, relief=FLAT,
+                                  activebackground="white", borderwidth=0, background="white", cursor="hand2")
+        self.hide_button.place(x=860, y=420)
+        self.password_entry.config(show='')
+
+    def hide(self):
+        self.show_button = Button(self.lgn_frame, image=self.show_image, command=self.show, relief=FLAT,
+                                  activebackground="white", borderwidth=0, background="white", cursor="hand2")
+        self.show_button.place(x=860, y=420)
+        self.password_entry.config(show='*')
+    def open_signup_page(self):
+        self.window.withdraw()  # Hide the login window
+        signup_window = Toplevel(self.window)  # Create a new window
+        signup_page = SignUpPage(signup_window, self)  # Pass the login page reference to sign up page
+
+    def open_password_reset(self):
+        reset_window = Toplevel(self.window)  # Create a new window for password reset
+        reset_page = PasswordResetPage(reset_window, self)  # Pass the login page reference to password reset page
+
+    def load_accounts(self):
+        if os.path.exists("accounts.json"):
+            with open("accounts.json", "r") as f:
+                self.accounts = json.load(f)
+        else:
+            self.accounts = {}
+
+    def save_accounts(self):
+        with open("accounts.json", "w") as f:
+            json.dump(self.accounts, f)
+
+    def add_account(self, username, password):
+        self.accounts[username] = password
+        self.save_accounts()
+
+    def update_password(self, username, password):
+        if username in self.accounts:
+            self.accounts[username] = password
+            self.save_accounts()
+
+# Start the application
+root = Tk()
+app = MainApplication(root)
+root.mainloop()
